@@ -1,0 +1,65 @@
+﻿grid-custom-edit-template {
+    display: block;
+    position: relative;
+    top: -1px;
+    width: 100%;
+    height:100%;
+    box-sizing: border-box;
+    padding: 2px;
+    -webkit-user-select: none;
+    user-select: none; 
+}
+
+    grid-custom-edit-template button {
+        float: right;
+        height: 100%;
+        box-sizing: border-box;
+        vertical-align: middle;
+        outline: none;
+    }
+
+    grid-custom-edit-template span {
+        vertical-align: middle;
+    }
+
+.ui-grid-cell-contents {
+    -webkit-user-select: none;
+    user-select: none; 
+}
+
+.ui-grid-column-menu-button {
+    -webkit-user-select: none;
+    user-select: none; 
+    tabindex: -1;
+}
+
+input-form {
+    display: block;
+    padding: 1em;
+    overflow: hidden;
+}
+
+    input-form button {
+        float: right;
+    }
+
+    input-form input {
+        width: 100%;
+    }
+
+    input-form .buttons {
+        margin-top: 2em;
+    }
+
+.changed {
+    background-color: lightcoral !important;
+    color: white;
+}
+
+.myGrid {
+    height: 619px;
+}
+
+.buttons {
+    margin-bottom: 1em;
+}

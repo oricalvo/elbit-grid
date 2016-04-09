@@ -1,0 +1,7 @@
+.vs
+packages/
+bin/
+debug/
+*.user
+bower_components/
+node_modules/

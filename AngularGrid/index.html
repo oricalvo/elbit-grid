@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html ng-app="MyApp">
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+
+    <link href="styles/bootstrap.css" rel="stylesheet" />
+    <link href="styles/ui-grid.css" rel="stylesheet" />
+    <link href="styles/site.css" rel="stylesheet" />
+</head>
+<body>
+    <div ng-controller="PerfCtrl">
+        <ul>
+            <li ng-repeat="(key, perfKey) in perfKeys">
+                <div ng-if="perfKey.type == 'average'">
+                    <span>{{perfKey.name}}</span>
+                    <span>{{perfKey.average}}</span>
+                    <span>ms</span>
+                </div>
+
+                <div ng-if="perfKey.type == 'number'">
+                    <span>{{perfKey.name}}</span>
+                    <span>{{perfKey.value}}</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div ng-controller="GridCtrl">
+        <div class="buttons">
+            <button ng-click="start()">Start</button>
+            <button ng-click="stop()">Stop</button>
+        </div>
+
+        <div class="myGrid" ui-grid="gridOptions" ui-grid-edit ui-grid-selection></div>
+    </div>
+
+    <script src="lib/jquery.js"></script>
+    <script src="lib/angular.js"></script>
+    <script src="lib/ui-bootstrap.js"></script>
+    <script src="lib/ui-bootstrap-tpls.js"></script>
+    <script src="lib/ui-grid.js"></script>
+    <script src="app/module.js"></script>
+    <script src="app/PerfService.js"></script>
+    <script src="app/Digest.js"></script>
+    <script src="app/GridCtrl.js"></script>
+    <script src="app/PerfCtrl.js"></script>
+    <script src="app/InputFormCtrl.js"></script>
+
+    <!--<script type="text/ng-template" id="elbit/grid-cell-template">
+        <div elbit-grid-cell class="ui-grid-cell-contents" ng-class="{changed: (row.entity.modifyVersion === $root.modifyVersion)}">{{row.entity[col.field]}}</div>
+    </script>-->
+
+    <script type="text/ng-template" id="ui-grid/ui-grid-row">
+        <div 
+             ng-repeat="(colRenderIndex, col) in colContainer.renderedColumns track by col.uid" 
+             ui-grid-one-bind-id-grid="rowRenderIndex + '-' + col.uid + '-cell'" 
+             class="ui-grid-cell" ng-class="{ 'ui-grid-row-header-cell': col.isRowHeader, 'changed': row.entity.modifyVersion === $root.modifyVersion }" 
+             role="{{col.isRowHeader ? 'rowheader' : 'gridcell'}}" ui-grid-cell>
+        </div>
+    </script>
+</body>
+</html>
