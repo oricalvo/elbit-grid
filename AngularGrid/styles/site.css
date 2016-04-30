@@ -1,4 +1,13 @@
-﻿grid-custom-edit-template {
+﻿body {
+    padding: 1em;
+    box-sizing: border-box;
+}
+
+[ng-cloak] {
+    display: none;
+}
+
+grid-custom-edit-template {
     display: block;
     position: relative;
     top: -1px;
@@ -62,4 +71,34 @@ input-form {
 
 .buttons {
     margin-bottom: 1em;
+}
+
+.grid-wrapper {
+    display: inline-block;
+    vertical-align: top;
+    width: 85%;
+    box-sizing: border-box;
+    float: left;
+    padding-left: 1em;
+}
+
+.grid-ctrl {
+}
+
+.perf-ctrl {
+    display: inline-block;
+    float: left;
+    vertical-align: top;
+    width: 15%;
+    background-color: lightgray;
+    box-sizing: border-box;
+    padding: 1em;
+}
+
+.definitions {
+    margin-bottom: 1em;
+}
+
+.definitions .field {
+    margin-right: 1em;
 }

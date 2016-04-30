@@ -4,55 +4,145 @@
 };
 
 var ROWS = 10000;
-var CHANGES = 2000;
+var CHANGES = 0.2;
 
 angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $interval, perfService) {
-    var data = getInitialData();
-    var dataById = buildIndex(data);
     var ver = 0;
     var intervalId;
-    $rootScope.modifyVersion = ver;
+    var data;
+    var dataById;
 
-    perfService.create("merge", "average");
+    $rootScope.modifyVersion = ver;
+    $scope.extraColumns = 8;
+    $scope.rows = ROWS;
+    $scope.mergeSize = CHANGES;
+    $scope.interval = 1000;
 
     $scope.gridOptions = {
         enableFullRowSelection: true,
         multiSelect: true,
         enableFiltering: true,
+        enableScrollbars: true,
+        columnDefs: [],
     };
 
-    $scope.gridOptions.columnDefs = [
+    var originalColumns = [
         {
-            name: 'firstName',
-            enableCellEdit: true
+            field: "firstName",
+            enableCellEdit: true,
+            width: 100,
         },
         {
             name: 'lastName',
-            editableCellTemplate: "<grid-custom-edit-template class='ui-grid-cell-contents'></grid-custom-edit-template>"
+            editableCellTemplate: "<grid-custom-edit-template class='ui-grid-cell-contents'></grid-custom-edit-template>",
+            width: 100,
         },
-        { name: 'email' },
+        {
+            name: 'email',
+            width: 100,
+        },
         {
             name: "birthday",
             type: "date",
             enableCellEdit: true,
-            cellFilter: 'date:"yyyy-MM-dd"'
+            cellFilter: 'date:"yyyy-MM-dd"',
+            width: 100,
         },
         {
             name: "isAdmin",
-            type: "boolean"
+            type: "boolean",
+            width: 100,
         },
         {
             name: "role",
             editableCellTemplate: 'ui-grid/dropdownEditor',
             editDropdownOptionsArray: enumToDropdownOptionsArray(Roles),
             cellFilter: "roleName",
+            width: 100,
         },
     ];
 
-    $scope.gridOptions.data = data;
+    rebuildData();
+
+    console.log(window.nativeHost);
+    nativeHost.register(changesArrivedFromServer);
+
+    function changesArrivedFromServer(json) {
+        var changes = JSON.parse(json);
+        mergeChanges(changes);
+        //console.log(changes.length);
+
+        $scope.$apply();
+    }
+
+    function createPerfCounters() {
+        //perfService.create("columns", "number", originalColumns.length + $scope.extraColumns);
+        //perfService.create("rows", "number", $scope.rows);
+        //perfService.create("changes", "number", ($scope.mergeSize * $scope.rows));
+        perfService.create("getInitial", "average");
+        perfService.create("getChanges", "average");
+        perfService.create("merge", "average");
+    }
+
+    function rebuildData() {
+        buildColumns();
+
+        data = [];
+        createPerfCounters();
+
+        getInitialData().then(function (contacts) {
+            data = contacts;
+
+            dataById = buildIndex(data);
+            $scope.gridOptions.data = data;
+
+            $scope.$apply();
+        });
+
+    }
+
+    $scope.extraColumnsChanged = function () {
+        rebuildData();
+    }
+
+    $scope.rowsChanged = function () {
+        rebuildData();
+    }
+
+    $scope.mergeSizeChanged = function () {
+        rebuildData();
+    }
+
+    $scope.intervalChanged = function () {
+        if (intervalId) {
+            $scope.stop();
+
+            $scope.start();
+        }
+    }
 
     $scope.editCell = function (row, field, scope) {
         console.log("%O %O %O", row, field, scope);
+    }
+
+    $scope.addNewRows = function () {
+        var id = "10000a";
+
+        var contact = {
+            id: id,
+            firstName: "FN" + id,
+            lastName: "LN" + id,
+            email: "EM" + id,
+            birthday: new Date(),
+            isAdmin: true,
+            role: Roles.User,
+        };
+
+        for (var j = 0; j < $scope.extraColumns; j++) {
+            contact["ex" + (j + 1)] = "ex" + (j + 1) + "_" + id;
+        }
+
+        data.push(contact);
     }
 
     $scope.start = function () {
@@ -62,12 +152,30 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
 
         intervalId = $interval(function () {
             getLatest();
-        }, 1000);
+        }, $scope.interval);
     }
 
     $scope.stop = function () {
         $interval.cancel(intervalId);
         intervalId = null;
+    }
+
+    function buildColumns() {
+        //$scope.gridOptions.columnDefs = originalColumns;
+
+        var columnDefs = originalColumns.concat([]);
+
+        for (var i = 0; i < $scope.extraColumns; i++) {
+            var columnDef = {
+                displayName: 'Ex(' + (i+1) + ")",
+                name: "ex" + (i+1),
+                width: 100,
+            }
+
+            columnDefs.push(columnDef);
+        }
+
+        $scope.gridOptions.columnDefs = columnDefs;
     }
 
     function buildIndex(data) {
@@ -79,14 +187,6 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         }
 
         return index;
-    }
-
-    function getLatest() {
-        $rootScope.modifyVersion = ++ver;
-
-        var changes = getChanges(ver);
-
-        mergeChanges(changes);
     }
 
     function mergeChanges(changes) {
@@ -112,12 +212,12 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         var arr = [];
         var ids = [];
 
-        for (var i = 1; i <= ROWS; i++) {
+        for (var i = 1; i <= $scope.rows; i++) {
             arr.push(i);
         }
 
-        for (var i = 0; i < CHANGES; i++) {
-            var index = Math.floor(Math.random() * 10000) % (ROWS - i);
+        for (var i = 0; i < $scope.mergeSize * $scope.rows; i++) {
+            var index = Math.floor(Math.random() * 10000) % ($scope.rows - i);
             var id = arr[index];
             if (id === undefined) {
                 throw new Error("Invalid id: " + id);
@@ -131,24 +231,54 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
     }
 
     function getInitialData() {
-        var data = [];
 
-        for (var i = 0; i < ROWS; i++) {
-            var id = i + 1;
-            var contact = {
-                id: id,
-                firstName: "Ori" + id,
-                lastName: "Calvo" + id,
-                email: "ori@gmail.com" + id,
-                birthday: new Date(),
-                isAdmin: true,
-                role: Roles.User,
-            };
+        var before = new Date();
+        return nativeHost.getInitial($scope.rows, $scope.mergeSize, $scope.extraColumns).then(function (json) {
+            var contacts = JSON.parse(json);
 
-            data.push(contact);
-        }
+            var after = new Date();
+            perfService.set("getInitial", after - before);
 
-        return data;
+            return contacts;
+        });
+
+        //var data = [];
+
+        //for (var i = 0; i < $scope.rows; i++) {
+        //    var id = i + 1;
+        //    var contact = {
+        //        id: id,
+        //        firstName: "FN" + id,
+        //        lastName: "LN" + id,
+        //        email: "EM" + id,
+        //        birthday: new Date(),
+        //        isAdmin: true,
+        //        role: Roles.User,
+        //    };
+
+        //    for (var j = 0; j < $scope.extraColumns; j++) {
+        //        contact["ex" + (j + 1)] = "ex" + (j + 1) + "_" + id;
+        //    }
+
+        //    data.push(contact);
+        //}
+
+        //return data;
+    }
+
+    function getLatest() {
+        $rootScope.modifyVersion = ++ver;
+
+        var before = new Date();
+        nativeHost.getChanges().then(function (changes) {
+            var contacts = JSON.parse(changes);
+
+            var after = new Date();
+            perfService.set("getChanges", after - before);
+
+            mergeChanges(contacts);
+            $scope.$apply();
+        });
     }
 
     function getChanges(ver) {
@@ -161,13 +291,17 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
             var id = ids[i];
             var contact = {
                 id: id,
-                firstName: "Ori" + id + suffix,
-                lastName: "Calvo" + id + suffix,
-                email: "ori@gmail.com" + id + suffix,
+                firstName: "FN" + id + suffix,
+                lastName: "LN" + id + suffix,
+                email: "EM" + id + suffix,
                 birthday: new Date(),
                 isAdmin: false,
                 role: Roles.Admin,
             };
+
+            for (var j = 0; j < $scope.extraColumns; j++) {
+                contact["ex" + (j + 1)] = "ex" + (j + 1) + "_" + id + suffix;
+            }
 
             newData.push(contact);
         }
@@ -181,6 +315,10 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         contact.email = change.email;
         contact.isAdmin = change.isAdmin;
         contact.modifyVersion = $rootScope.modifyVersion;
+
+        for (var i = 0; i < $scope.extraColumns; i++) {
+            contact["ex" + (i + 1)] = change["ex" + (i + 1)];
+        }
     }
 
     function enumToDropdownOptionsArray(e) {

@@ -9,8 +9,9 @@
     <link href="styles/site.css" rel="stylesheet" />
 </head>
 <body>
-    <div ng-controller="PerfCtrl">
-        <ul>
+    <div class="perf-ctrl" ng-controller="PerfCtrl">
+        <h3>Peformance Counters</h3>
+        <ul ng-cloak>
             <li ng-repeat="(key, perfKey) in perfKeys">
                 <div ng-if="perfKey.type == 'average'">
                     <span>{{perfKey.name}}</span>
@@ -26,13 +27,34 @@
         </ul>
     </div>
 
-    <div ng-controller="GridCtrl">
-        <div class="buttons">
-            <button ng-click="start()">Start</button>
-            <button ng-click="stop()">Stop</button>
-        </div>
+    <div class="grid-wrapper">
+        <div class="grid-ctrl" ng-controller="GridCtrl" ng-cloak>
+            <div class="buttons">
+                <button ng-click="start()">Start</button>
+                <button ng-click="stop()">Stop</button>
+                <button ng-click="addNewRows()">Add Row (10000a)</button>
+            </div>
 
-        <div class="myGrid" ui-grid="gridOptions" ui-grid-edit ui-grid-selection></div>
+            <div class="definitions">
+                <span class="field">
+                    Rows: <input type="number" ng-change="rowsChanged()" ng-model="rows" />
+                </span>
+
+                <span class="field">
+                    Extra Columns: <input type="number" ng-change="extraColumnsChanged()" ng-model="extraColumns" />
+                </span>
+
+                <span class="field">
+                    Changes: <input type="number" ng-change="mergeSizeChanged()" ng-model="mergeSize" />
+                </span>
+
+                <span class="field">
+                    Interval: <input type="number" ng-change="intervalChanged()" ng-model="interval" />
+                </span>
+            </div>
+
+            <div class="myGrid" ui-grid="gridOptions" ui-grid-edit ui-grid-selection></div>
+        </div>
     </div>
 
     <script src="lib/jquery.js"></script>
