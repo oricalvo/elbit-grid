@@ -6,7 +6,7 @@
 var ROWS = 10000;
 var CHANGES = 0.2;
 
-angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $interval, perfService) {
+angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $interval, $q, perfService, uiGridGroupingConstants) {
     var ver = 0;
     var intervalId;
     var data;
@@ -24,6 +24,8 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         enableFiltering: true,
         enableScrollbars: true,
         columnDefs: [],
+        expandableRowTemplate: '/app/subGrid.html',
+        expandableRowHeight: 150,
     };
 
     var originalColumns = [
@@ -47,6 +49,7 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
             enableCellEdit: true,
             cellFilter: 'date:"yyyy-MM-dd"',
             width: 100,
+            treeAggregationType: uiGridGroupingConstants.aggregation.MAX,
         },
         {
             name: "isAdmin",
@@ -59,13 +62,18 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
             editDropdownOptionsArray: enumToDropdownOptionsArray(Roles),
             cellFilter: "roleName",
             width: 100,
+            //grouping: { groupPriority: 0 },
+            //cellTemplate: '<div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents" title="TOOLTIP">{{COL_FIELD CUSTOM_FILTERS}}</div>'
         },
     ];
 
     rebuildData();
 
     console.log(window.nativeHost);
-    nativeHost.register(changesArrivedFromServer);
+
+    if (typeof nativeHost !== "undefined") {
+        nativeHost.register(changesArrivedFromServer);
+    }
 
     function changesArrivedFromServer(json) {
         var changes = JSON.parse(json);
@@ -91,6 +99,11 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         createPerfCounters();
 
         getInitialData().then(function (contacts) {
+
+            contacts.forEach(function (contact) {
+                attachEmailsGridToContact(contact);
+            });
+
             data = contacts;
 
             dataById = buildIndex(data);
@@ -230,6 +243,62 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
         return ids;
     }
 
+    function attachEmailsGridToContact(contact) {
+        contact.subGridOptions = {
+            expandableRowTemplate: '/app/subSubGrid.html',
+            expandableRowHeight: 150,
+            columnDefs: [
+                {
+                    field: "id",
+                    width: 100,
+                },
+                {
+                    field: "email",
+                }
+            ],
+            data: [
+            ]
+        };
+
+        for (var j = 0; j < getRandomNumber(10) ; j++) {
+            contact.subGridOptions.data.push({
+                id: (j + 1),
+                email: "email" + (j + 1) + "@gmail.com",
+            });
+        }
+    }
+
+    function getInitialDataMock() {
+        var data = [];
+
+        for (var i = 0; i < $scope.rows; i++) {
+            var id = i + 1;
+            var contact = {
+                id: id,
+                firstName: "FN" + id,
+                lastName: "LN" + id,
+                email: "EM" + id,
+                birthday: new Date(),
+                isAdmin: (getRandomNumber(2) == 0 ? true : false),
+                role: (getRandomNumber(2) == 0 ? Roles.User : Roles.Admin),
+            };
+
+            for (var j = 0; j < $scope.extraColumns; j++) {
+                contact["ex" + (j + 1)] = "ex" + (j + 1) + "_" + id;
+            }
+
+            data.push(contact);
+        }
+
+        return $q.when(data);
+    }
+
+    function getRandomNumber(max) {
+        var floating = Math.random() * 100000;
+        var res = Math.floor(floating % max);
+        return res;
+    }
+
     function getInitialData() {
 
         var before = new Date();
@@ -241,29 +310,6 @@ angular.module("MyApp").controller("GridCtrl", function ($scope, $rootScope, $in
 
             return contacts;
         });
-
-        //var data = [];
-
-        //for (var i = 0; i < $scope.rows; i++) {
-        //    var id = i + 1;
-        //    var contact = {
-        //        id: id,
-        //        firstName: "FN" + id,
-        //        lastName: "LN" + id,
-        //        email: "EM" + id,
-        //        birthday: new Date(),
-        //        isAdmin: true,
-        //        role: Roles.User,
-        //    };
-
-        //    for (var j = 0; j < $scope.extraColumns; j++) {
-        //        contact["ex" + (j + 1)] = "ex" + (j + 1) + "_" + id;
-        //    }
-
-        //    data.push(contact);
-        //}
-
-        //return data;
     }
 
     function getLatest() {

@@ -71,6 +71,8 @@
     <Content Include="app\PerfCtrl.js" />
     <Content Include="app\InputForm.html" />
     <Content Include="app\InputFormCtrl.js" />
+    <Content Include="app\subSubGrid.html" />
+    <Content Include="app\subGrid.html" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="index.html" />
     <Content Include="lib\angular-animate.js" />
